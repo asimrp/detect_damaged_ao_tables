@@ -25,8 +25,9 @@ set transaction isolation level serializable;
 drop table if exists pt_ao_column_segfile_count;
 create table pt_ao_column_segfile_count as
   (select g.gp_segment_id as segid, a.relid, a.segrelid, count(g.segment_file_num) as pt_count
-   from gp_dist_random('gp_relation_node') g, pg_class c, pg_appendonly a
-   where g.relfilenode_oid = c.relfilenode and c.oid = a.relid and a.columnstore = true
+   from gp_dist_random('gp_relation_node') g, gp_dist_random('pg_class') c, pg_appendonly a
+   where g.gp_segment_id = c.gp_segment_id and g.relfilenode_oid = c.relfilenode
+   and c.oid = a.relid and a.columnstore = true
    and g.segment_file_num >=0 and g.segment_file_num < 128
    group by g.gp_segment_id, a.relid, a.segrelid, c.relname)
   distributed by (segid);
@@ -46,8 +47,9 @@ create table aocsseg_count as
 -- tables.
 insert into pt_ao_column_segfile_count
   (select g.gp_segment_id as segid, a.relid::regclass, a.segrelid, count(g.segment_file_num) as pt_count
-   from gp_dist_random('gp_relation_node') g, pg_class c, pg_appendonly a
-   where g.relfilenode_oid = c.relfilenode and c.oid = a.relid and a.columnstore = false
+   from gp_dist_random('gp_relation_node') g, gp_dist_random('pg_class') c, pg_appendonly a
+   where g.gp_segment_id = c.gp_segment_id and g.relfilenode_oid = c.relfilenode
+   and c.oid = a.relid and a.columnstore = false
    group by g.gp_segment_id, a.relid, a.segrelid, c.relname);
 
 insert into aocsseg_count
