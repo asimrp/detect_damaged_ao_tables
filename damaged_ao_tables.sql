@@ -132,7 +132,7 @@ end;
 --
 select
     gpsegid,
-    ao_oid::regclass,
+    ao_oid::regclass as ao_tablename,
     aoseg_oid,
     aoseg_count,
     pt_count
