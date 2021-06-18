@@ -128,13 +128,20 @@ create table damaged_ao_tables as
 end;
 
 --
--- Final output: damaged table names and their aoseg table OIDs
+-- Final output: damaged table names, their aoseg relfilenode, data
+-- directory and content ID of the segments on which the damage is
+-- found.
 --
 select
-    gpsegid,
-    ao_oid::regclass as ao_tablename,
-    aoseg_oid,
-    aoseg_count,
-    pt_count
+    d.ao_oid::regclass as ao_tablename,
+    d.*,
+    c.relfilenode as aoseg_relfilenode,
+    dir.paramvalue as datadir
 from
-    damaged_ao_tables;
+    damaged_ao_tables d,
+    gp_dist_random('pg_class') c,
+    gp_toolkit.__gp_param_local_setting('data_directory') dir
+where
+    c.gp_segment_id = d.gpsegid
+    and d.gpsegid = dir.paramsegment
+    and c.oid = d.aoseg_oid;
